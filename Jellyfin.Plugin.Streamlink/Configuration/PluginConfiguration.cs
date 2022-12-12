@@ -71,6 +71,7 @@ namespace Jellyfin.Plugin.Streamlink.Configuration
         {
             var mediaSource = new MediaSourceInfo
             {
+                Name = "",
                 Path = Url,
                 Protocol = MediaProtocol.File,
                 MediaStreams = new List<MediaStream>
