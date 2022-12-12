@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Configuration;
-using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Configuration;
@@ -16,8 +13,6 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Plugin.Streamlink;
-using Jellyfin.Plugin.Streamlink.Configuration;
 
 using Emby.Server.Implementations.LiveTv.TunerHosts;
 
@@ -27,6 +22,7 @@ namespace Jellyfin.Plugin.Streamlink
     {
         private readonly IServerApplicationHost _appHost;
         private readonly IConfigurationManager _configurationManager;
+        private readonly ILogger _logger;
 
         public StreamlinkStream(
             MediaSourceInfo mediaSource,
@@ -41,6 +37,7 @@ namespace Jellyfin.Plugin.Streamlink
         {
             _appHost = appHost;
             _configurationManager = configurationManager;
+            _logger = logger;
             OriginalStreamId = originalStreamId;
             EnableStreamSharing = true;
         }
@@ -58,7 +55,7 @@ namespace Jellyfin.Plugin.Streamlink
             Directory.CreateDirectory(Path.GetDirectoryName(TempFilePath));
 
             var typeName = GetType().Name;
-            Logger.LogInformation("Opening {0} Live stream from {1}", typeName, url);
+            _logger.LogInformation("Opening {0} Live stream from {1}", typeName, url);
 
 
             var streamlinkProc = new Process();
@@ -74,7 +71,7 @@ namespace Jellyfin.Plugin.Streamlink
             streamlinkProc.StartInfo.ArgumentList.Add(url);
             streamlinkProc.StartInfo.ArgumentList.Add(Jellyfin.Plugin.Streamlink.Plugin.Instance.Configuration.StreamQuality);
 
-            Logger.LogInformation(
+            _logger.LogInformation(
                 "Starting streamlink with: {0} {1}", 
                 streamlinkProc.StartInfo.FileName,
                 String.Join(" ", streamlinkProc.StartInfo.ArgumentList)
@@ -89,7 +86,7 @@ namespace Jellyfin.Plugin.Streamlink
             #pragma warning disable CS4014
             StartStreaming(streamlinkProc, taskCompletionSource, LiveStreamCancellationTokenSource.Token);
 
-            MediaSource.Path = _appHost.GetLoopbackHttpApiUrl() + "/LiveTv/LiveStreamFiles/" + UniqueId + "/stream.ts";
+            MediaSource.Path = _appHost.GetApiUrlForLocalAccess() + "/LiveTv/LiveStreamFiles/" + UniqueId + "/stream.ts";
             MediaSource.Protocol = MediaProtocol.Http;
             MediaSource.LiveStreamId = OriginalStreamId;
 
@@ -102,7 +99,7 @@ namespace Jellyfin.Plugin.Streamlink
 
             if (!taskCompletionSource.Task.Result)
             {
-                Logger.LogWarning("Zero bytes copied from stream {0} to {1} but no exception raised", GetType().Name, TempFilePath);
+                _logger.LogWarning("Zero bytes copied from stream {0} to {1} but no exception raised", GetType().Name, TempFilePath);
                 throw new EndOfStreamException(String.Format(CultureInfo.InvariantCulture, "Zero bytes copied from stream {0}", GetType().Name));
             }
         }
@@ -113,7 +110,7 @@ namespace Jellyfin.Plugin.Streamlink
             {
                 try
                 {
-                    Logger.LogInformation("Beginning {0} stream to {1}", GetType().Name, TempFilePath);
+                    _logger.LogInformation("Beginning {0} stream to {1}", GetType().Name, TempFilePath);
                     streamlinkProc.Start();
                     using (streamlinkProc)
                     using (var stream = streamlinkProc.StandardOutput.BaseStream)
@@ -130,12 +127,12 @@ namespace Jellyfin.Plugin.Streamlink
                 }
                 catch (OperationCanceledException ex)
                 {
-                    Logger.LogInformation("Copying of {0} to {1} was canceled", GetType().Name, TempFilePath);
+                    _logger.LogInformation("Copying of {0} to {1} was canceled", GetType().Name, TempFilePath);
                     openTaskCompletionSource.TrySetException(ex);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error copying live stream {0} to {1}.", GetType().Name, TempFilePath);
+                    _logger.LogError(ex, "Error copying live stream {0} to {1}.", GetType().Name, TempFilePath);
                     openTaskCompletionSource.TrySetException(ex);
                 }
                 finally
@@ -147,7 +144,7 @@ namespace Jellyfin.Plugin.Streamlink
                 openTaskCompletionSource.TrySetResult(false);
 
                 EnableStreamSharing = false;
-                await DeleteTempFiles(new List<string> { TempFilePath }).ConfigureAwait(false);
+                await DeleteTempFiles(TempFilePath).ConfigureAwait(false);
             });
         }
 
