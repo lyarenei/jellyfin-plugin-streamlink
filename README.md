@@ -1,10 +1,4 @@
-## Deprecation
-
-This plugin has been updated to (mostly) work with Jellyfin 10.7, but I noticed some persistent issues with Jellyfin on Roku, which was the original purpose of this project. Since I only use this every 4 months or so, I've decided that I'd rather give in to Amazon and buy a fire stick to use a real Twitch app instead of debugging Jellyfin server and Roku every time I want to use it.
-
-The implementation for this has always been tied to internal libraries for Jellyfin, which means that it's pretty brittle to updates. So rather than learning a lot about the internals of Jellyfin and rewriting this to be more stable, I'll retire it and leave the repo up as an example if anyone finds it useful.
-
-<h1 align="center">Jellyfin Streamlink Plugin</h1>
+<h1 align="center">Jellyfin Streamlink Plugin (experimental)</h1>
 <h3 align="center">A plugin for the <a href="https://jellyfin.media">Jellyfin Project</a></h3>
 <h3 align="center">to work with <a href="https://streamlink.github.io">Streamlink</a></h3>
 
@@ -14,7 +8,13 @@ This plugin is built with .NET Core to use Streamlink as a channel provider for 
 
 ## Some Notes About This Project
 
-First and foremost, this plugin is not an official plugin adopted by the Jellyfin project. Do not bother the Jellyfin dev team for any issues related to it.
+Please treat this plugin more like an experiment. This means that the functionality may be tied to specific Jellyfin version. 
+
+This is because the plugin partially uses internal libraries instead of standard plugin API.
+
+As of now, it should work on Jellyfin 10.8.4+, but only 10.8.8 was tested.
+
+Also, this plugin is not an official plugin adopted by the Jellyfin project. Do not bother the Jellyfin dev team for any issues related to it.
 
 This is a plugin to watch various livestream sites through Jellyfin. Generally I would advise against using this and instead using those sites' apps directly, since they will be more maintained. The initial work was done on this as a weekend project and the motivation was that certain livestreaming platforms don't have first party (or even third party) apps on certain devices (e.g. Amazon pulled all Twitch apps from Roku).
 
@@ -29,7 +29,7 @@ In any case, there are some features that I would like to add before aiming at a
 
 1. Clone or download this repository
 
-2. Ensure you have .NET 5.0+ SDK setup and installed
+2. Ensure you have .NET 6.0+ SDK setup and installed
 
 3. Copy Emby.Server.Implementations.dll from an existing Jellyfin install into the repo root
 
