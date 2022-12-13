@@ -136,17 +136,14 @@
                     },
 
                     deleteStream: function (button, index) {
-                        var msg = "Are you sure you wish to delete this channel?";
+                        let msg = "Are you sure you wish to delete this channel?";
+                        if (confirm(msg)) {
+                            StreamlinkConfigurationPage.config.Channels.splice(index, 1);
+                            let page = $(button).parents('.page')[0];
 
-                        require(['confirm'], function (confirm) {
-                            confirm(msg, "Delete Channel").then(function () {
-                                StreamlinkConfigurationPage.config.Channels.splice(index, 1);
-                                var page = $(button).parents('.page')[0];
-
-                                StreamlinkConfigurationPage.saveConfiguration();
-                                StreamlinkConfigurationPage.populateStreamList(page);
-                            });
-                        });
+                            StreamlinkConfigurationPage.saveConfiguration();
+                            StreamlinkConfigurationPage.populateStreamList(page);
+                        }
                     },
 
                     addStreamPopup: function () {
